@@ -21,7 +21,8 @@
     "react-countup": "^6.5.3",
     "react-data-grid": "^7.0.0-beta.44",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.23.1"
+    "react-router-dom": "^6.23.1",
+    "vite-plugin-copy": "^0.1.6"
   },
   "devDependencies": {
     "@types/react": "^18.2.66",
