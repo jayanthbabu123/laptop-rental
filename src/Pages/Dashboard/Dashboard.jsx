@@ -4,19 +4,21 @@ import { AgGridReact } from "ag-grid-react"; // React Data Grid Component
 import "ag-grid-community/styles/ag-grid.css"; // Mandatory CSS required by the grid
 import "ag-grid-community/styles/ag-theme-quartz.css"; // Optional Theme applied to the grid
 import "./Dashboard.css";
-import Button from "react-bootstrap/Button";
-import Modal from "react-bootstrap/Modal";
+import DashboardModal from "../../Components/DashboardModal";
+import DashboardContextMenu from "../../Components/DashboardContextMenu";
 
 function Dashboard() {
   const [laptops, setLaptops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [colDefs, setColDefs] = useState([]);
   const [show, setShow] = useState(false);
+  const [selectedRow, setSelectedRow] = useState({});
+  const [editMode, setEditMode] = useState(false);
 
   const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
+
   const contextMenuRef = useRef(null);
-  useEffect(() => {
+  const getLaptops = () => {
     axios.get("http://localhost:5000/api/laptops").then((response) => {
       console.log(response.data);
       setLaptops(response.data);
@@ -46,6 +48,9 @@ function Dashboard() {
       setColDefs(columnDefs);
       setLoading(false);
     });
+  };
+  useEffect(() => {
+    getLaptops();
 
     document.addEventListener("click", (event) => {
       const element = contextMenuRef.current;
@@ -62,13 +67,28 @@ function Dashboard() {
       console.log(event);
       element.style.left = event.event.clientX + "px";
       element.style.top = event.event.clientY + "px";
-      element.params = event.data;
+      setSelectedRow(event.data);
     }
   };
 
   const handleView = () => {
-    console.log("View");
-    console.dir(contextMenuRef.current.params);
+    setEditMode(false);
+    setShow(true);
+  };
+
+  const handleEdit = () => {
+    setShow(true);
+    setEditMode(true);
+  };
+
+  const handleDelete = () => {
+    axios
+      .delete(`http://localhost:5000/api/laptops/${selectedRow._id}`)
+      .then((response) => {
+        console.log(response.data);
+        getLaptops();
+        handleClose();
+      });
   };
 
   return (
@@ -98,29 +118,20 @@ function Dashboard() {
               pivot: true,
             }}
           />
-          <div className="context-menu shadow border" ref={contextMenuRef}>
-            <ul>
-              <li onClick={handleShow}>View</li>
-              <li>Edit</li>
-              <li>Delete</li>
-            </ul>
-          </div>
+          <DashboardContextMenu
+            handleView={handleView}
+            handleEdit={handleEdit}
+            handleDelete={handleDelete}
+            contextMenuRef={contextMenuRef}
+          />
         </div>
       )}
-      <Modal show={show} onHide={handleClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>Modal heading</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>Woohoo, you are reading this text in a modal!</Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleClose}>
-            Close
-          </Button>
-          <Button variant="primary" onClick={handleClose}>
-            Save Changes
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <DashboardModal
+        show={show}
+        handleClose={handleClose}
+        selectedRow={selectedRow}
+        editMode={editMode}
+      />
     </div>
   );
 }
